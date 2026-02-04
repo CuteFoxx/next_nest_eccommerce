@@ -1,0 +1,65 @@
+services:
+  backend:
+    build:
+      dockerfile: Dockerfile
+      context: ./backend
+      target: development
+    volumes:
+      - ./backend:/src
+      - /src/node_modules
+    env_file:
+      - .env
+    ports:
+      - "${PORT}:${PORT}"
+      - "${DEBUG_PORT}:${DEBUG_PORT}"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  frontend:
+    build:
+      dockerfile: Dockerfile
+      context: ./frontend
+    volumes:
+      - ./frontend:/src
+      - /app/node_modules
+    depends_on:
+      - backend
+    ports:
+      - 3000:3000
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - "${DB_PORT}:5432"
+  prisma-studio:
+    image: node:24-alpine3.22
+    working_dir: /src
+    volumes:
+      - ./backend:/src
+    command: npx prisma studio --port ${PRISMA_STUDIO_PORT} --browser none
+    ports:
+      - "${PRISMA_STUDIO_PORT}:${PRISMA_STUDIO_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - db
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+volumes:
+  postgres_data:
