@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile
       context: ./frontend
     volumes:
-      - ./frontend:/src
+      - ./frontend:/app
       - /app/node_modules
     depends_on:
       - backend
