@@ -8,6 +8,12 @@ COPY . .
 
 RUN npm install --force
 
+RUN npx prisma generate
+
+COPY entrypoint.sh /entrypoint.sh
+RUN sed -i 's/\r//' /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 CMD [ "npm", "run", "start:dev" ]
 
 #DEBUG
@@ -22,6 +28,12 @@ COPY . .
 
 RUN npm install --force
 
+RUN npx prisma generate
+
+COPY entrypoint.sh /entrypoint.sh
+RUN sed -i 's/\r//' /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 CMD [ "npm", "run", "start:debug" ]
 
 # PRODUCTION
