@@ -120,3 +120,38 @@ Single `.env` at the repo root is consumed by Docker Compose and by the backend 
 | Redis         | 6379 |
 | Prisma Studio | 5555 |
 | Debug         | 9229 |
+
+## Conventions
+
+### Commits
+Conventional Commits — no scope, no `Co-Authored-By` trailer.
+Format: `<type>: <description>` (imperative, lowercase, no period)
+Breaking change: `<type>!: <description>` + `BREAKING CHANGE:` in footer
+Body/footer optional — use for motivation or issue refs (`Closes #123`)
+Types: `feat` `fix` `refactor` `perf` `style` `test` `docs` `build` `ops` `chore`
+
+### Code patterns
+
+**Backend**
+- New module: `*.module.ts` + `*.service.ts` + `*.controller.ts` in `src/<feature>/`, registered in `app.module.ts`
+- New Prisma model: add `*.prisma` in `prisma/models/`, run `prisma migrate dev` then `prisma generate`
+- Import Prisma types from `generated/prisma/client` or `generated/prisma/enums`
+- `PrismaService` is global — inject directly, no need to import `PrismaModule` per feature
+- Input DTO: `class-validator` decorators on `CreateXDto`
+- Output DTO: `@Expose()` fields on `XDto` + `@UseInterceptors(ClassSerializerInterceptor)` on route
+- Guards: `@UseGuards(JwtAuthGuard)` / `@UseGuards(LocalAuthGuard)` / `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(Role.ADMIN)`
+- Config: `ConfigService.get<string>('KEY')` — all vars from root `.env`
+
+**Frontend**
+- Path alias: `@/` → `src/`
+- Tailwind v4: `@import "tailwindcss"` in `globals.css` (not a plugin). Use `cn()` from `@/lib/utils` for conditional classes
+- Add shadcn components: `npx shadcn add <component>` from `frontend/` → outputs to `src/components/ui/`
+- Modal (controlled pattern):
+  ```tsx
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  <button ref={triggerRef} onClick={() => setIsOpen(true)}>open</button>
+  <Modal triggerElement={triggerRef} controls={{ isOpen, setIsOpen }}>
+    <ModalContent><ModalTitle>Title</ModalTitle></ModalContent>
+  </Modal>
+  ```
