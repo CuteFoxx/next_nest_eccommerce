@@ -3,19 +3,21 @@ import {
   Post,
   UseGuards,
   Request,
-  Bind,
   Body,
   Get,
-  UseInterceptors,
-  ClassSerializerInterceptor,
+  Res,
 } from '@nestjs/common';
-import { Request as ReqType } from 'express';
+import { Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { UserDto } from 'src/users/dto/user.dto';
+import { CurrentUser } from './decorators/currentUser.decorator';
+import { User } from 'generated/prisma/browser';
+import { Serialize } from 'src/interceptors/serialize.interceptor';
+import { JwtRefreshAuthGuard } from './guards/jwt-refresh.auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -26,12 +28,8 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(LocalAuthGuard)
-  @Bind(Request())
-  login(@Request() req: ReqType) {
-    if (!req.user) {
-      throw new Error('User not found in request');
-    }
-    return this.authService.login(req.user);
+  login(@CurrentUser() user: User, @Res({ passthrough: true }) res: Response) {
+    return this.authService.login(user, res);
   }
 
   @Post('signup')
@@ -39,8 +37,8 @@ export class AuthController {
     return this.usersService.create(body);
   }
 
+  @Serialize(UserDto)
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Get('profile')
   async getProfile(
     @Request() req: { user: { id: string; email: string } },
@@ -50,5 +48,14 @@ export class AuthController {
       return null;
     }
     return user;
+  }
+
+  @Post('refresh')
+  @UseGuards(JwtRefreshAuthGuard)
+  refresh(
+    @CurrentUser() user: User,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.login(user, res);
   }
 }

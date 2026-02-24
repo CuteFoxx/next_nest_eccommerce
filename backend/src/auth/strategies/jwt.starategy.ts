@@ -2,15 +2,9 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'generated/prisma/client';
-
-interface AuthJwtPayload {
-  sub: string;
-  email: string;
-  iat: number;
-  exp: number;
-}
+import { TokenPayload } from 'src/types/token-payload.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,24 +12,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
   ) {
-    const jwtSecret = configService.get<string>('JWT_SECRET');
-    if (!jwtSecret) {
-      throw new Error('JWT_SECRET is not defined');
-    }
-
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: jwtSecret,
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: Request) =>
+          (req.cookies?.Authentication as string | undefined) ?? null,
+      ]),
+      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });
   }
 
-  async validate(payload: AuthJwtPayload): Promise<Partial<User>> {
-    if (payload.email == null) {
-      throw new UnauthorizedException('Invalid token payload');
-    }
-
-    const user = await this.usersService.findOne({ email: payload.email });
+  async validate(payload: TokenPayload): Promise<Express.User> {
+    const user = await this.usersService.findOne({
+      id: parseInt(payload.userId),
+    });
     if (!user) {
       throw new UnauthorizedException('User not found');
     }

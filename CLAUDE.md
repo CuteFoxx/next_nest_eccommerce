@@ -64,12 +64,17 @@ npx shadcn add <component>
 │   │   ├── users/users.service.ts           findOne, create (bcrypt hash), update, delete
 │   │   ├── users/dto/create-user.dto.ts     Input validation (class-validator)
 │   │   ├── users/dto/user.dto.ts            Response shape (@Expose + ClassSerializerInterceptor)
-│   │   ├── auth/auth.service.ts             validateUser() + login() → JWT
-│   │   ├── auth/auth.controller.ts          POST /auth/login|signup, GET /auth/profile
-│   │   ├── auth/strategies/local.strategy.ts   passport-local; usernameField=email
-│   │   ├── auth/strategies/jwt.starategy.ts    passport-jwt; validates payload → user lookup
-│   │   ├── auth/guards/                     JwtAuthGuard, LocalAuthGuard, RolesGuard
-│   │   └── auth/decorators/roles.ts         @Roles(...Role[]) sets ROLES_KEY metadata
+│   │   ├── auth/auth.service.ts             validateUser() + login() → issues JWT cookies
+│   │   ├── auth/auth.controller.ts          POST /auth/login|signup|refresh, GET /auth/profile
+│   │   ├── auth/strategies/local.strategy.ts      passport-local; usernameField=email
+│   │   ├── auth/strategies/jwt.starategy.ts        passport-jwt; reads Authentication cookie → user lookup
+│   │   ├── auth/strategies/jwt-refresh.strategy.ts passport-jwt refresh; reads Refresh cookie → verifyRefreshToken
+│   │   ├── auth/guards/                     JwtAuthGuard, LocalAuthGuard, JwtRefreshAuthGuard, RolesGuard
+│   │   ├── auth/decorators/currentUser.decorator.ts  @CurrentUser() param decorator; extracts req.user
+│   │   ├── auth/decorators/roles.ts         @Roles(...Role[]) sets ROLES_KEY metadata
+│   │   ├── interceptors/serialize.interceptor.ts    @Serialize(Dto) shorthand for plainToClass serialization
+│   │   ├── types/token-payload.interface.ts  TokenPayload { userId: string }
+│   │   └── types/express.d.ts               Augments Express.User as Pick<PrismaUser, 'id'|'email'|'role'>
 │   ├── prisma/
 │   │   ├── schema.prisma                    Generator config only (multi-file setup)
 │   │   └── models/user.prisma               User model + Role enum (USER/ADMIN)
@@ -95,8 +100,15 @@ The root `package.json` is a workspace config only (no runnable scripts of value
 - **Entry**: `src/main.ts` — bootstraps NestJS, enables CORS for `FRONTEND_URL`, applies global `ValidationPipe` (whitelist + forbidNonWhitelisted)
 - **Module graph**: `AppModule` → `PrismaModule` (global) + `UsersModule` + `AuthModule`
 - **Prisma**: schema lives in `prisma/` (multi-file: `schema.prisma` + `models/*.prisma`). Client is generated to `generated/prisma/`. `PrismaService` uses `PrismaPg` adapter (driver-level connection).
-- **Auth flow**: `POST /auth/login` → `LocalAuthGuard` (validates credentials) → returns JWT. `POST /auth/signup` → `UsersService.create`. `GET /auth/profile` → `JwtAuthGuard`. Role-based access uses `@Roles()` decorator + `RolesGuard`.
-- **DTOs**: `class-validator` decorators for input validation; `class-transformer` + `@Expose()` on `UserDto` for response serialization via `ClassSerializerInterceptor`.
+- **Auth flow**:
+  - `POST /auth/signup` → `UsersService.create`
+  - `POST /auth/login` → `LocalAuthGuard` (validates credentials) → `AuthService.login()` sets two httpOnly cookies: `Authentication` (access token) and `Refresh` (refresh token)
+  - `POST /auth/refresh` → `JwtRefreshAuthGuard` (reads `Refresh` cookie, bcrypt-compares against stored hash) → re-issues both cookies
+  - `GET /auth/profile` → `JwtAuthGuard` (reads `Authentication` cookie)
+  - Role-based access: `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(Role.ADMIN)`
+  - Refresh token is bcrypt-hashed before being stored in `User.refreshToken`; raw token stays only in the httpOnly cookie
+  - Cookie expiry is computed with `setSeconds()` from `JWT_EXPIRES_IN_S` / `JWT_REFRESH_EXPIRES_IN_S` (both in **seconds**)
+- **DTOs**: `class-validator` decorators for input validation; `@Serialize(XDto)` shorthand decorator (in `interceptors/serialize.interceptor.ts`) wraps `plainToClass` with `excludeExtraneousValues: true`.
 - **Note**: JWT strategy file is misnamed `jwt.starategy.ts` (typo — keep consistent if referencing).
 
 ### Frontend
@@ -108,7 +120,20 @@ The root `package.json` is a workspace config only (no runnable scripts of value
 
 ### Environment variables
 
-Single `.env` at the repo root is consumed by Docker Compose and by the backend `ConfigService`. Required vars: `DATABASE_URL`, `JWT_SECRET`, `PORT`, `DEBUG_PORT`, `DB_*`, `REDIS_PORT`, `FRONTEND_URL`, `PRISMA_STUDIO_PORT`.
+Single `.env` at the repo root is consumed by Docker Compose and by the backend `ConfigService`. See `.example.env` for the full list with descriptions. Required vars:
+
+| Variable | Description |
+|---|---|
+| `PORT` / `DEBUG_PORT` | Backend HTTP and Node debugger ports |
+| `DB_HOST/PORT/DATABASE/USERNAME/PASSWORD` | Postgres connection parts |
+| `DATABASE_URL` | Full Prisma connection string |
+| `REDIS_PORT` | Redis port |
+| `JWT_SECRET` | Signing secret for access tokens |
+| `JWT_REFRESH_SECRET` | Signing secret for refresh tokens |
+| `JWT_EXPIRES_IN_S` | Access token lifetime **in seconds** (e.g. `1800` = 30 min) |
+| `JWT_REFRESH_EXPIRES_IN_S` | Refresh token lifetime **in seconds** (e.g. `72000` = 20 h) |
+| `FRONTEND_URL` | CORS allow-origin in `main.ts` |
+| `PRISMA_STUDIO_PORT` | Prisma Studio GUI port |
 
 ### Ports
 
@@ -139,7 +164,11 @@ Types: `feat` `fix` `refactor` `perf` `style` `test` `docs` `build` `ops` `chore
 - `PrismaService` is global — inject directly, no need to import `PrismaModule` per feature
 - Input DTO: `class-validator` decorators on `CreateXDto`
 - Output DTO: `@Expose()` fields on `XDto` + `@UseInterceptors(ClassSerializerInterceptor)` on route
-- Guards: `@UseGuards(JwtAuthGuard)` / `@UseGuards(LocalAuthGuard)` / `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(Role.ADMIN)`
+- Guards: `@UseGuards(JwtAuthGuard)` / `@UseGuards(LocalAuthGuard)` / `@UseGuards(JwtRefreshAuthGuard)` / `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(Role.ADMIN)`
+- Current user: `@CurrentUser()` param decorator (from `auth/decorators/currentUser.decorator.ts`) — injects `req.user` typed as `Express.User`
+- Serialization: `@Serialize(XDto)` on the route handler (from `interceptors/serialize.interceptor.ts`) — runs `plainToClass` with `excludeExtraneousValues: true`; fields must have `@Expose()` on the DTO
+- Auth tokens are issued as httpOnly cookies (`Authentication` + `Refresh`), never in the response body
+- Token expiry vars (`JWT_EXPIRES_IN_S`, `JWT_REFRESH_EXPIRES_IN_S`) are in **seconds** — use `setSeconds()` / `getSeconds()` when computing cookie `expires`, not `setMilliseconds()`
 - Config: `ConfigService.get<string>('KEY')` — all vars from root `.env`
 
 **Frontend**

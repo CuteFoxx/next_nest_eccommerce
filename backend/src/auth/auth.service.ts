@@ -1,8 +1,15 @@
-import { Injectable, UseInterceptors } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma, Role, User } from 'generated/prisma/client';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config/dist/config.service';
+import { Response } from 'express';
+import { TokenPayload } from 'src/types/token-payload.interface';
 
 export interface JwtPayload {
   username: string;
@@ -15,32 +22,93 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   @UseInterceptors()
-  async validateUser(
-    where: Prisma.UserWhereUniqueInput,
-    password: string,
-  ): Promise<Partial<User> | null> {
-    const user = await this.usersService.findOne(where);
+  async validateUser(where: Prisma.UserWhereUniqueInput, password: string) {
+    try {
+      const user = await this.usersService.findOne(where);
 
-    const isMatch = await bcrypt.compare(password, user?.password ?? '');
-    if (user && isMatch) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...result } = user;
-      return result;
+      const authenticated = await bcrypt.compare(
+        password,
+        user?.password ?? '',
+      );
+      if (!authenticated) {
+        throw new UnauthorizedException('Not valid credentials');
+      }
+      return user;
+    } catch {
+      throw new UnauthorizedException('Not valid credentials');
     }
-    return null;
   }
 
-  login(user: Partial<User>) {
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      role: user.role,
-    } as Partial<JwtPayload>;
-    return {
-      access_token: this.jwtService.sign(payload),
+  async login(user: User, response: Response) {
+    const expiresIn = new Date();
+    expiresIn.setSeconds(
+      expiresIn.getSeconds() +
+        parseInt(this.configService.getOrThrow<string>('JWT_EXPIRES_IN_S')),
+    );
+
+    const expiresInRefreshToken = new Date();
+    expiresInRefreshToken.setSeconds(
+      expiresInRefreshToken.getSeconds() +
+        parseInt(
+          this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN_S'),
+        ),
+    );
+
+    const tokenPayload: TokenPayload = {
+      userId: user.id.toString(),
     };
+
+    const accessToken = this.jwtService.sign(tokenPayload, {
+      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      expiresIn: parseInt(
+        this.configService.getOrThrow<string>('JWT_EXPIRES_IN_S'),
+      ),
+    });
+
+    const refreshToken = this.jwtService.sign(tokenPayload, {
+      secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      expiresIn: parseInt(
+        this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN_S'),
+      ),
+    });
+
+    await this.usersService.update(
+      { id: user.id },
+      { refreshToken: bcrypt.hashSync(refreshToken, 10) },
+    );
+
+    response.cookie('Authentication', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      expires: expiresIn,
+    });
+
+    response.cookie('Refresh', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      expires: expiresInRefreshToken,
+    });
+  }
+
+  async verifyRefreshToken(refreshToken: string, userId: string) {
+    try {
+      const user = await this.usersService.findOne({ id: parseInt(userId) });
+      const authenticated = await bcrypt.compare(
+        refreshToken,
+        user?.refreshToken ?? '',
+      );
+
+      if (!authenticated) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      return user;
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }

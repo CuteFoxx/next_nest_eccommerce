@@ -23,7 +23,7 @@ export class UsersService {
     });
   }
 
-  async update(where: Prisma.UserWhereUniqueInput, data: CreateUserDto) {
+  async update(where: Prisma.UserWhereUniqueInput, data: Partial<User>) {
     const user = await this.prismaService.user.findUnique({ where });
 
     if (!user) {
