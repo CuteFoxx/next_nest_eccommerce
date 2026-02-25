@@ -111,4 +111,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
+
+  async logout(userId: number, response: Response) {
+    await this.usersService.update({ id: userId }, { refreshToken: null });
+
+    response.clearCookie('Authentication');
+    response.clearCookie('Refresh');
+  }
 }
