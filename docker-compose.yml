@@ -24,6 +24,9 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      - WATCHPACK_POLLING=1000
+      - BACKEND_URL=${BACKEND_URL}
     depends_on:
       - backend
     ports:

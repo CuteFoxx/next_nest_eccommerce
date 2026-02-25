@@ -3,6 +3,7 @@
 import { User } from "lucide-react";
 import { Modal, ModalContent, ModalTitle } from "./modal";
 import { useRef, useState } from "react";
+import { LoginForm } from "./login/loginForm";
 
 const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +23,7 @@ const Header = () => {
       >
         <ModalContent>
           <ModalTitle>Login</ModalTitle>
-          <p>Login form goes here</p>
+          <LoginForm />
         </ModalContent>
       </Modal>
     </>
