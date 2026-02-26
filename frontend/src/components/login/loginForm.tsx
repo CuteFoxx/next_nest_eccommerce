@@ -6,7 +6,11 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useId } from "react";
 import axios from "axios";
+import { useAuth } from "@/context/auth.context";
+import { User } from "@/types/auth";
+import { useRouter } from "next/navigation";
 
+// TODO improve form logic block submit on request, handle errors, loading state, etc
 export const loginFormSchema = z.object({
   email: z.email("Please enter a valid email address."),
   password: z
@@ -15,6 +19,8 @@ export const loginFormSchema = z.object({
 });
 
 export function LoginForm() {
+  const { setUser } = useAuth();
+  const router = useRouter();
   const formId = useId();
   const form = useForm({
     resolver: zodResolver(loginFormSchema),
@@ -25,9 +31,15 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, data, {
-      withCredentials: true,
-    });
+    const { data: user } = await axios.post<User>(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+      data,
+      {
+        withCredentials: true,
+      },
+    );
+    setUser(user);
+    router.push("/profile");
   };
 
   return (

@@ -92,6 +92,8 @@ export class AuthService {
       secure: process.env.NODE_ENV === 'production',
       expires: expiresInRefreshToken,
     });
+
+    return user;
   }
 
   async verifyRefreshToken(refreshToken: string, userId: string) {
