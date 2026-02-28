@@ -1,0 +1,23 @@
+model Product {
+    id             Int           @id @default(autoincrement())
+    name           String
+    description    String
+    price          Decimal       @db.Decimal(10, 2)
+    compareAtPrice Decimal?      @db.Decimal(10, 2)
+    stock          Int           @default(0)
+    status         ProductStatus @default(DRAFT)
+
+    categoryId Int?
+    category   Category? @relation(fields: [categoryId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([categoryId])
+}
+
+enum ProductStatus {
+    DRAFT
+    PUBLISHED
+    ARCHIVED
+}
