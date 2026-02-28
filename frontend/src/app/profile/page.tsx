@@ -5,7 +5,9 @@ const Profile = () => {
   const { user } = useAuth();
   return (
     <div>
-      <h2>Welcome, {user?.email}!</h2>
+      <h2>
+        Welcome, {user?.username} ({user?.email})!
+      </h2>
       <p>This is your profile page.</p>
     </div>
   );

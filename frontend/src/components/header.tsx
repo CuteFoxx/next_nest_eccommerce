@@ -8,7 +8,7 @@ import { useAuth } from "@/context/auth.context";
 import Link from "next/link";
 
 const Header = () => {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -21,7 +21,7 @@ const Header = () => {
             <User />
           </Link>
         ) : (
-          <button ref={triggerRef} onClick={() => setIsModalOpen(true)} disabled={isLoading}>
+          <button ref={triggerRef} onClick={() => setIsModalOpen(true)}>
             <User />
           </button>
         )}
