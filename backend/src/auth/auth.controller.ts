@@ -34,8 +34,11 @@ export class AuthController {
   }
 
   @Post('signup')
-  signup(@Body() body: CreateUserDto) {
-    return this.usersService.create(body);
+  signup(
+    @Body() body: CreateUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.signup(body, res);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config/dist/config.service';
 import { Response } from 'express';
 import { TokenPayload } from 'src/types/token-payload.interface';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 export interface JwtPayload {
   username: string;
@@ -94,6 +95,11 @@ export class AuthService {
     });
 
     return user;
+  }
+
+  async signup(user: CreateUserDto, response: Response) {
+    const createdUser = await this.usersService.create(user);
+    return this.login(createdUser, response);
   }
 
   async verifyRefreshToken(refreshToken: string, userId: string) {

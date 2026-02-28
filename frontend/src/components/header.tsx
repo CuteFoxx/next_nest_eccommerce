@@ -1,11 +1,10 @@
 "use client";
 
 import { User } from "lucide-react";
-import { Modal, ModalContent, ModalTitle } from "./modal";
 import { useRef, useState } from "react";
-import { LoginForm } from "./login/loginForm";
 import { useAuth } from "@/context/auth.context";
 import Link from "next/link";
+import AuthModal from "./authModal/authModal";
 
 const Header = () => {
   const { isLoggedIn } = useAuth();
@@ -15,7 +14,7 @@ const Header = () => {
   return (
     <>
       <header className="container flex min-h-14 items-center justify-between py-4">
-        <h1>NextNext eCommerce</h1>
+        <Link href="/">NextNext eCommerce</Link>
         {isLoggedIn ? (
           <Link href="/profile">
             <User />
@@ -26,17 +25,11 @@ const Header = () => {
           </button>
         )}
       </header>
-      {!isLoggedIn && (
-        <Modal
-          triggerElement={triggerRef}
-          controls={{ isOpen: isModalOpen, setIsOpen: setIsModalOpen }}
-        >
-          <ModalContent>
-            <ModalTitle>Login</ModalTitle>
-            <LoginForm />
-          </ModalContent>
-        </Modal>
-      )}
+      <AuthModal
+        triggerRef={triggerRef}
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+      />
     </>
   );
 };

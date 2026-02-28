@@ -9,31 +9,36 @@ import axios from "axios";
 import { useAuth } from "@/context/auth.context";
 import { User } from "@/types/auth";
 import { useRouter } from "next/navigation";
+import { ca } from "zod/locales";
 
 // TODO improve form logic block submit on request, handle errors, loading state, etc
-export const loginFormSchema = z.object({
+export const signupFormSchema = z.object({
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters long" }),
   email: z.email("Please enter a valid email address."),
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters long" }),
 });
 
-export function LoginForm() {
+export function SignupForm() {
   const { setUser } = useAuth();
   const router = useRouter();
   const formId = useId();
   const form = useForm({
-    resolver: zodResolver(loginFormSchema),
+    resolver: zodResolver(signupFormSchema),
     defaultValues: {
+      username: "",
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof signupFormSchema>) => {
     try {
       const { data: user } = await axios.post<User>(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/signup`,
         data,
         {
           withCredentials: true,
@@ -65,6 +70,26 @@ export function LoginForm() {
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <FieldGroup>
+          <Controller
+            name="username"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-rhf-input-username">
+                  Username
+                </FieldLabel>
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="Username"
+                  autoComplete="username"
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
           <Controller
             name="email"
             control={form.control}
@@ -109,7 +134,7 @@ export function LoginForm() {
           )}
         </FieldGroup>
         <Button type="submit" form={formId}>
-          Login
+          Register
         </Button>
       </form>
     </>

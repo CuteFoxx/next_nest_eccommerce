@@ -125,7 +125,7 @@ export const ModalContent = ({
       )}
       open={isOpen ?? false}
     >
-      <div className="dark:bg-dark-grey z-99 max-w-120 fixed left-1/2 right-4 top-1/2 w-[calc(100vw-var(--spacing)*12)] -translate-x-1/2 -translate-y-1/2 rounded-[0.375rem] bg-white p-6 pb-8 text-black md:p-8 dark:text-white">
+      <div className="dark:bg-dark-grey z-99 max-w-120 fixed left-1/2 right-4 top-1/2 w-[calc(100vw-var(--spacing)*12)] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 pb-8 text-black md:p-8 dark:text-white">
         {children}
       </div>
     </dialog>

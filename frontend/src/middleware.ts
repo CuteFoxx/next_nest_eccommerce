@@ -26,7 +26,6 @@ export async function middleware(req: NextRequest) {
     } catch {}
   }
 
-  // Protect authenticated routes
   const isProtected = protectedRoutes.some((route) =>
     req.nextUrl.pathname.startsWith(route),
   );
