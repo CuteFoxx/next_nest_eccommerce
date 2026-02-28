@@ -3,6 +3,7 @@ import { useAuth } from "@/context/auth.context";
 
 const Profile = () => {
   const { user } = useAuth();
+
   return (
     <div>
       <h2>

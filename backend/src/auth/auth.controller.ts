@@ -20,6 +20,7 @@ import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh.auth.guard';
 
 @Controller('auth')
+@Serialize(UserDto)
 export class AuthController {
   constructor(
     private readonly usersService: UsersService,
@@ -37,16 +38,17 @@ export class AuthController {
     return this.usersService.create(body);
   }
 
-  @Serialize(UserDto)
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(
     @Request() req: { user: { id: string; email: string } },
   ): Promise<UserDto | null> {
     const user = await this.usersService.findOne({ email: req.user.email });
+
     if (!user) {
       return null;
     }
+
     return user;
   }
 
