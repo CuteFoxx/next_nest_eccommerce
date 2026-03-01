@@ -34,12 +34,22 @@ import { FileDto } from './dto/file.dto';
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
+  @Get()
+  findMany(@Query() query: FileQueryDto) {
+    return this.fileService.findMany(query);
+  }
+
+  @Get(':id')
+  @Serialize(FileDto)
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.fileService.findOne(id);
+  }
+
   @Post()
   @Serialize(FileDto)
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   upload(
     @UploadedFile(
       new ParseFilePipe({
@@ -56,22 +66,10 @@ export class FileController {
     return this.fileService.upload(file, createFileDto, user.id);
   }
 
-  @Get()
-  findMany(@Query() query: FileQueryDto) {
-    return this.fileService.findMany(query);
-  }
-
-  @Get(':id')
-  @Serialize(FileDto)
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.fileService.findOne(id);
-  }
-
   @Patch(':id')
   @Serialize(FileDto)
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateFileDto: UpdateFileDto,
@@ -80,9 +78,8 @@ export class FileController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.fileService.delete(id);
   }

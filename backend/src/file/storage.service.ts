@@ -14,13 +14,13 @@ export class StorageService {
     this.baseUrl = this.configService.get<string>('STORAGE_BASE_URL', '');
   }
 
-  generateKey(file: Express.Multer.File): string {
+  generateKey(file: Express.Multer.File, dirPrefix: string): string {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const id = randomUUID().replace(/-/g, '');
     const ext = extname(file.originalname) || '.bin';
-    return `uploads/${year}/${month}/${id}${ext}`;
+    return `${this.configService.getOrThrow<string>('STORAGE_LOCAL_PATH')}/${dirPrefix}/${year}/${month}/${id}${ext}`;
   }
 
   async put(file: Express.Multer.File, key: string): Promise<void> {

@@ -14,9 +14,11 @@ model Category {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    images File[] @relation("CategoryIcon")
+    imageId Int?
+    image   File? @relation(fields: [imageId], references: [id])
 
     @@index([parentId])
     @@index([slug])
     @@index([parentId, position])
+    @@index([imageId])
 }

@@ -17,7 +17,7 @@ export class FileService {
     dto: CreateFileDto,
     uploadedById: number,
   ) {
-    const key = this.storageService.generateKey(file);
+    const key = this.storageService.generateKey(file, dto.purpose);
 
     await this.storageService.put(file, key);
 

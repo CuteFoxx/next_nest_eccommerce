@@ -1,4 +1,15 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+
+class CategoryImageDto {
+  @Expose()
+  id: number;
+
+  @Expose()
+  url: string;
+
+  @Expose()
+  alt?: string;
+}
 
 export class CategoryDto {
   @Expose()
@@ -18,6 +29,10 @@ export class CategoryDto {
 
   @Expose()
   parentId?: number;
+
+  @Expose()
+  @Type(() => CategoryImageDto)
+  image?: CategoryImageDto;
 
   @Expose()
   createdAt: Date;

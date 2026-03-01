@@ -10,7 +10,7 @@ model File {
     uploadedById Int
     uploadedBy   User @relation(fields: [uploadedById], references: [id])
 
-    categories   Category[]    @relation("CategoryIcon")
+    categories   Category[]
     productFiles ProductFile[]
 
     createdAt DateTime @default(now())

@@ -35,6 +35,9 @@ export class CreateProductDto {
   @IsNumber()
   @Min(0)
   @IsOptional()
+  @Transform(({ value }: { value: string }) =>
+    value !== undefined ? parseInt(value) : value,
+  )
   stock: number;
 
   @IsEnum(ProductStatus)
@@ -43,5 +46,8 @@ export class CreateProductDto {
 
   @IsNumber()
   @IsOptional()
+  @Transform(({ value }: { value: string }) =>
+    value !== undefined ? parseInt(value) : value,
+  )
   categoryId?: number;
 }
