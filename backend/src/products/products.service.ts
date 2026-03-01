@@ -5,6 +5,10 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { Prisma } from 'generated/prisma/browser';
 import { FilePurpose } from 'generated/prisma/enums';
 
+const imagesInclude = {
+  images: { orderBy: { position: 'asc' as const }, include: { file: true } },
+};
+
 @Injectable()
 export class ProductsService {
   constructor(
@@ -13,14 +17,20 @@ export class ProductsService {
   ) {}
 
   async findOne(where: Prisma.ProductWhereInput) {
-    const product = await this.prismaService.product.findFirst({ where });
+    const product = await this.prismaService.product.findFirst({
+      where,
+      include: imagesInclude,
+    });
     if (!product) throw new NotFoundException('Product not found');
     return product;
   }
 
   //   TODO implement pagination
   async findMany(where: Prisma.ProductWhereInput) {
-    return this.prismaService.product.findMany({ where });
+    return this.prismaService.product.findMany({
+      where,
+      include: imagesInclude,
+    });
   }
 
   async create(
@@ -51,9 +61,7 @@ export class ProductsService {
             },
           }),
         },
-        include: {
-          images: { orderBy: { position: 'asc' }, include: { file: true } },
-        },
+        include: imagesInclude,
       });
     } catch (err) {
       await Promise.allSettled(

@@ -21,11 +21,13 @@ export class CreateProductDto {
   @MaxLength(1500)
   description: string;
 
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }: { value: string }) => parseFloat(value))
   @IsNumber()
   price: number;
 
-  @Transform(({ value }) => (value !== undefined ? parseFloat(value) : value))
+  @Transform(({ value }: { value: string }) =>
+    value !== undefined ? parseFloat(value) : value,
+  )
   @IsNumber()
   @IsOptional()
   compareAtPrice?: number;

@@ -79,6 +79,10 @@ export class FileService {
     return { ...updated, url: this.storageService.getUrl(updated.key) };
   }
 
+  getUrl(key: string): string {
+    return this.storageService.getUrl(key);
+  }
+
   async delete(id: number) {
     const file = await this.findOne(id);
 

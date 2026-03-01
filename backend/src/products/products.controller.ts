@@ -15,6 +15,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
+import { ProductDto } from './dto/product.dto';
+import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles';
@@ -27,16 +29,19 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get(':id')
+  @Serialize(ProductDto)
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.findOne({ id });
   }
 
   @Get()
+  @Serialize(ProductDto)
   findMany() {
     return this.productsService.findMany({});
   }
 
   @Post()
+  @Serialize(ProductDto)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @UseInterceptors(FilesInterceptor('files', 10, { storage: memoryStorage() }))

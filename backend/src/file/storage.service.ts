@@ -11,7 +11,7 @@ export class StorageService {
 
   constructor(private readonly configService: ConfigService) {
     this.basePath = this.configService.getOrThrow<string>('STORAGE_LOCAL_PATH');
-    this.baseUrl = this.configService.getOrThrow<string>('STORAGE_BASE_URL');
+    this.baseUrl = this.configService.get<string>('STORAGE_BASE_URL', '');
   }
 
   generateKey(file: Express.Multer.File): string {
@@ -48,6 +48,6 @@ export class StorageService {
 
   getUrl(key: string): string {
     if (key.startsWith('http')) return key;
-    return `${this.baseUrl}/${key}`;
+    return this.baseUrl ? `${this.baseUrl}/${key}` : `/${key}`;
   }
 }

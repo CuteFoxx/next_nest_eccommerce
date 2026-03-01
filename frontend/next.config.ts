@@ -1,16 +1,25 @@
 import type { NextConfig } from "next";
 
+// Server-side: Docker-internal URL for rewrites and image optimization
+const internalBackendUrl = process.env.BACKEND_URL!;
+
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
-  rewrites: async () => {
-    return [
+  images: {
+    remotePatterns: [
       {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+        protocol: "http",
+        hostname: "backend",
       },
-    ];
+    ],
   },
+  rewrites: async () => [
+    { source: "/api/:path*", destination: `${internalBackendUrl}/:path*` },
+    {
+      source: "/uploads/:path*",
+      destination: `${internalBackendUrl}/uploads/:path*`,
+    },
+  ],
 };
 
 export default nextConfig;
