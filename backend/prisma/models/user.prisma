@@ -6,6 +6,8 @@ model User {
     createdAt    DateTime @default(now())
     role         Role     @default(USER)
     refreshToken String?
+
+    files File[]
 }
 
 enum Role {

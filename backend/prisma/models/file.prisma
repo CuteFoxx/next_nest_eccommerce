@@ -1,0 +1,27 @@
+model File {
+    id       Int         @id @default(autoincrement())
+    key      String
+    filename String
+    mimetype String
+    size     Int
+    alt      String?
+    purpose  FilePurpose @default(GENERAL)
+
+    uploadedById Int
+    uploadedBy   User @relation(fields: [uploadedById], references: [id])
+
+    categories Category[] @relation("CategoryIcon")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([purpose])
+    @@index([uploadedById])
+    @@index([createdAt])
+}
+
+enum FilePurpose {
+    GENERAL
+    PRODUCT_IMAGE
+    CATEGORY_IMAGE
+}

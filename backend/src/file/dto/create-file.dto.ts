@@ -1,0 +1,13 @@
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { FilePurpose } from 'generated/prisma/enums';
+
+export class CreateFileDto {
+  @IsEnum(FilePurpose)
+  @IsOptional()
+  purpose: FilePurpose;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  alt?: string;
+}
