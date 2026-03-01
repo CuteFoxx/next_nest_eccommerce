@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsEnum,
   IsNumber,
@@ -20,9 +21,11 @@ export class CreateProductDto {
   @MaxLength(1500)
   description: string;
 
+  @Transform(({ value }) => parseFloat(value))
   @IsNumber()
   price: number;
 
+  @Transform(({ value }) => (value !== undefined ? parseFloat(value) : value))
   @IsNumber()
   @IsOptional()
   compareAtPrice?: number;

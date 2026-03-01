@@ -1,0 +1,13 @@
+model ProductFile {
+    productId Int
+    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    fileId Int
+    file   File @relation(fields: [fileId], references: [id], onDelete: Restrict)
+
+    position Int @default(0)
+
+    @@id([productId, fileId])
+    @@index([productId, position])
+    @@index([fileId])
+}

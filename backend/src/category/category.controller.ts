@@ -32,17 +32,15 @@ export class CategoryController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoryService.create(createCategoryDto);
   }
 
   @Patch(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCategoryDto: UpdateCategoryDto,
@@ -51,9 +49,8 @@ export class CategoryController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.categoryService.delete(id);
   }
