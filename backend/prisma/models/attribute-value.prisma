@@ -1,0 +1,16 @@
+model AttributeValue {
+    id          Int       @id @default(autoincrement())
+    attributeId Int
+    attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+    name        String
+    slug        String
+    position    Int       @default(0)
+
+    productAttributeValues ProductAttributeValue[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([attributeId, slug])
+    @@index([attributeId, position])
+}

@@ -5,8 +5,15 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { Prisma } from 'generated/prisma/browser';
 import { FilePurpose } from 'generated/prisma/enums';
 
-const imagesInclude = {
+const productInclude = {
   images: { orderBy: { position: 'asc' as const }, include: { file: true } },
+  attributeValues: {
+    include: {
+      attributeValue: {
+        include: { attribute: true },
+      },
+    },
+  },
 };
 
 @Injectable()
@@ -19,17 +26,37 @@ export class ProductsService {
   async findOne(where: Prisma.ProductWhereInput) {
     const product = await this.prismaService.product.findFirst({
       where,
-      include: imagesInclude,
+      include: productInclude,
     });
     if (!product) throw new NotFoundException('Product not found');
     return product;
   }
 
   //   TODO implement pagination
-  async findMany(where: Prisma.ProductWhereInput) {
+  async findMany(
+    where: Prisma.ProductWhereInput,
+    attributeFilters?: Record<string, string[]>,
+  ) {
+    if (attributeFilters && Object.keys(attributeFilters).length > 0) {
+      const attrConditions = Object.entries(attributeFilters).map(
+        ([attrSlug, valueSlugs]) => ({
+          attributeValues: {
+            some: {
+              attributeValue: {
+                attribute: { slug: attrSlug },
+                slug: { in: valueSlugs },
+              },
+            },
+          },
+        }),
+      );
+
+      where = { ...where, AND: attrConditions };
+    }
+
     return this.prismaService.product.findMany({
       where,
-      include: imagesInclude,
+      include: productInclude,
     });
   }
 
@@ -61,7 +88,7 @@ export class ProductsService {
             },
           }),
         },
-        include: imagesInclude,
+        include: productInclude,
       });
     } catch (err) {
       await Promise.allSettled(

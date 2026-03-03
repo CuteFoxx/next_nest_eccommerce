@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { CategoryModule } from './category/category.module';
 import { FileModule } from './file/file.module';
+import { AttributeModule } from './attribute/attribute.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { FileModule } from './file/file.module';
     ProductsModule,
     CategoryModule,
     FileModule,
+    AttributeModule,
   ],
   controllers: [],
   providers: [],

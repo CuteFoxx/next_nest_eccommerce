@@ -1,0 +1,13 @@
+model Attribute {
+    id       Int    @id @default(autoincrement())
+    name     String
+    slug     String @unique
+    position Int    @default(0)
+
+    values AttributeValue[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([position])
+}

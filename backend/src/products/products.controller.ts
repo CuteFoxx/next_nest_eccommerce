@@ -7,6 +7,8 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -23,10 +25,15 @@ import { Roles } from 'src/auth/decorators/roles';
 import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 import { Role } from 'generated/prisma/enums';
 import { User } from 'generated/prisma/browser';
+import { AttributeService } from 'src/attribute/attribute.service';
+import { AssignProductAttributesDto } from 'src/attribute/dto/assign-product-attributes.dto';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly attributeService: AttributeService,
+  ) {}
 
   @Get(':id')
   @Serialize(ProductDto)
@@ -36,8 +43,24 @@ export class ProductsController {
 
   @Get()
   @Serialize(ProductDto)
-  findMany() {
-    return this.productsService.findMany({});
+  findMany(@Query() query: Record<string, string>) {
+    const { categoryId, ...rest } = query;
+
+    const where: Record<string, unknown> = {};
+    if (categoryId) where.categoryId = parseInt(categoryId, 10);
+
+    const attributeFilters: Record<string, string[]> = {};
+    for (const [key, value] of Object.entries(rest)) {
+      if (value)
+        attributeFilters[key.toLowerCase()] = value
+          .split(',')
+          .map((v) => v.toLowerCase());
+    }
+
+    return this.productsService.findMany(
+      where,
+      Object.keys(attributeFilters).length ? attributeFilters : undefined,
+    );
   }
 
   @Post()
@@ -68,5 +91,23 @@ export class ProductsController {
   @Roles(Role.ADMIN)
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.delete(id);
+  }
+
+  @Put(':id/attributes')
+  @Serialize(ProductDto)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async setAttributes(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AssignProductAttributesDto,
+  ) {
+    await this.attributeService.setProductAttributes(id, dto.attributeValueIds);
+    return this.productsService.findOne({ id });
+  }
+
+  @Get(':id/attributes')
+  @Serialize(ProductDto)
+  getAttributes(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.findOne({ id });
   }
 }

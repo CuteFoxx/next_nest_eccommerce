@@ -27,6 +27,36 @@ class ProductImageDto {
   file: ProductFileDto;
 }
 
+interface RawProductAttributeValue {
+  attributeValue: {
+    name: string;
+    slug: string;
+    attribute: { name: string; slug: string };
+  };
+}
+
+type GroupedAttributes = Record<
+  string,
+  { name: string; values: { name: string; slug: string }[] }
+>;
+
+function groupAttributes(raw: RawProductAttributeValue[]): GroupedAttributes {
+  const grouped: GroupedAttributes = {};
+
+  for (const { attributeValue } of raw) {
+    const attr = attributeValue.attribute;
+    if (!grouped[attr.slug]) {
+      grouped[attr.slug] = { name: attr.name, values: [] };
+    }
+    grouped[attr.slug].values.push({
+      name: attributeValue.name,
+      slug: attributeValue.slug,
+    });
+  }
+
+  return grouped;
+}
+
 export class ProductDto {
   @Expose()
   id: number;
@@ -67,4 +97,11 @@ export class ProductDto {
   @Expose()
   @Type(() => ProductImageDto)
   images: ProductImageDto[];
+
+  @Expose()
+  @Transform(
+    ({ obj }: { obj: { attributeValues: RawProductAttributeValue[] } }) =>
+      groupAttributes(obj.attributeValues ?? []),
+  )
+  attributes: GroupedAttributes;
 }
