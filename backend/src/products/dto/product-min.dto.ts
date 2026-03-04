@@ -7,6 +7,8 @@ export class ProductMinDto {
   @Expose()
   name: string;
   @Expose()
+  slug: string;
+  @Expose()
   description: string;
   @Expose()
   price: number;

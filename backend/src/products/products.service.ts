@@ -4,6 +4,7 @@ import { FileService } from 'src/file/file.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { Prisma } from 'generated/prisma/browser';
 import { FilePurpose } from 'generated/prisma/enums';
+import { generateSlug, uniqueSlug } from 'src/common/utils/slug';
 
 const productInclude = {
   images: { orderBy: { position: 'asc' as const }, include: { file: true } },
@@ -65,6 +66,14 @@ export class ProductsService {
     files: Express.Multer.File[],
     userId: number,
   ) {
+    const slug = await uniqueSlug(generateSlug(dto.name), (s) =>
+      this.prismaService.product.count({
+        where: {
+          OR: [{ slug: s }, { slug: { startsWith: `${s}-` } }],
+        },
+      }),
+    );
+
     const uploaded = await Promise.all(
       files.map((file) =>
         this.fileService.upload(
@@ -75,15 +84,25 @@ export class ProductsService {
       ),
     );
 
+    const { attributeValueIds, ...data } = dto;
+
     try {
       return await this.prismaService.product.create({
         data: {
-          ...dto,
+          ...data,
+          slug,
           ...(uploaded.length && {
             images: {
               create: uploaded.map((f, position) => ({
                 fileId: f.id,
                 position,
+              })),
+            },
+          }),
+          ...(attributeValueIds?.length && {
+            attributeValues: {
+              create: attributeValueIds.map((attributeValueId) => ({
+                attributeValueId,
               })),
             },
           }),
@@ -98,8 +117,23 @@ export class ProductsService {
     }
   }
 
-  update(id: number, data: Partial<CreateProductDto>) {
-    return this.prismaService.product.update({ where: { id }, data });
+  async update(id: number, data: Partial<CreateProductDto>) {
+    let slug: string | undefined;
+    if (data.name) {
+      slug = await uniqueSlug(generateSlug(data.name), (s) =>
+        this.prismaService.product.count({
+          where: {
+            OR: [{ slug: s }, { slug: { startsWith: `${s}-` } }],
+            NOT: { id },
+          },
+        }),
+      );
+    }
+
+    return this.prismaService.product.update({
+      where: { id },
+      data: { ...data, ...(slug && { slug }) },
+    });
   }
 
   delete(id: number) {

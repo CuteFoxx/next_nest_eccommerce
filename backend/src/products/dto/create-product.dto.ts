@@ -1,6 +1,8 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -50,4 +52,12 @@ export class CreateProductDto {
     value !== undefined ? parseInt(value) : value,
   )
   categoryId?: number;
+
+  @IsArray()
+  @IsInt({ each: true })
+  @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? JSON.parse(value) : value,
+  )
+  attributeValueIds?: number[];
 }
