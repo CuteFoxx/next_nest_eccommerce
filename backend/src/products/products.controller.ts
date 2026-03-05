@@ -27,6 +27,7 @@ import { Role } from 'generated/prisma/enums';
 import { User } from 'generated/prisma/browser';
 import { AttributeService } from 'src/attribute/attribute.service';
 import { AssignProductAttributesDto } from 'src/attribute/dto/assign-product-attributes.dto';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -43,8 +44,11 @@ export class ProductsController {
 
   @Get()
   @Serialize(ProductDto)
-  findMany(@Query() query: Record<string, string>) {
-    const { categoryId, ...rest } = query;
+  findMany(
+    @Query() pagination: PaginationQueryDto,
+    @Query() query: Record<string, string>,
+  ) {
+    const { categoryId, page, limit, ...rest } = query;
 
     const where: Record<string, unknown> = {};
     if (categoryId) where.categoryId = parseInt(categoryId, 10);
@@ -59,6 +63,7 @@ export class ProductsController {
 
     return this.productsService.findMany(
       where,
+      pagination,
       Object.keys(attributeFilters).length ? attributeFilters : undefined,
     );
   }

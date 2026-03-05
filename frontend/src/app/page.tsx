@@ -1,10 +1,11 @@
 import Product from "@/components/product/product";
 import { serverApi } from "@/lib/api.server";
 import type { Product as ProductType } from "@/types/product";
+import type { PaginatedResponse } from "@/types/pagination";
 
 export default async function Home() {
-  const products = await serverApi
-    .get<ProductType[]>("/products")
+  const { data: products } = await serverApi
+    .get<PaginatedResponse<ProductType>>("/products")
     .then((res) => res.data);
 
   return (

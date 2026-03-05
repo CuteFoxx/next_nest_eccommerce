@@ -12,7 +12,7 @@ const Product = ({ product }: { product: ProductType }) => {
 
   return (
     <div className="group relative w-auto hover:z-10">
-      <div className="border-1-gray-300 flex w-full flex-col gap-2 border bg-white p-4 transition-all group-hover:absolute group-hover:shadow-2xl">
+      <div className="border-1-gray-300 flex w-full flex-col gap-2 border bg-white p-4 group-hover:absolute group-hover:shadow-2xl">
         <Link href={`/product/${product.slug}`}>
           <Image
             className="min-h-27.5 lg:min-h-55 w-full object-cover px-4"

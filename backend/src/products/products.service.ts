@@ -5,6 +5,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { Prisma } from 'generated/prisma/browser';
 import { FilePurpose } from 'generated/prisma/enums';
 import { generateSlug, uniqueSlug } from 'src/common/utils/slug';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { paginate } from 'src/common/dto/paginated.dto';
 
 const productInclude = {
   images: { orderBy: { position: 'asc' as const }, include: { file: true } },
@@ -33,9 +35,9 @@ export class ProductsService {
     return product;
   }
 
-  //   TODO implement pagination
   async findMany(
     where: Prisma.ProductWhereInput,
+    { page, limit }: PaginationQueryDto,
     attributeFilters?: Record<string, string[]>,
   ) {
     if (attributeFilters && Object.keys(attributeFilters).length > 0) {
@@ -55,10 +57,20 @@ export class ProductsService {
       where = { ...where, AND: attrConditions };
     }
 
-    return this.prismaService.product.findMany({
-      where,
-      include: productInclude,
-    });
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prismaService.product.findMany({
+        where,
+        include: productInclude,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prismaService.product.count({ where }),
+    ]);
+
+    return paginate(data, total, page, limit);
   }
 
   async create(

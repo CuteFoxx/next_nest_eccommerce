@@ -1,22 +1,9 @@
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsOptional } from 'class-validator';
 import { FilePurpose } from 'generated/prisma/enums';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
-export class FileQueryDto {
+export class FileQueryDto extends PaginationQueryDto {
   @IsEnum(FilePurpose)
   @IsOptional()
   purpose?: FilePurpose;
-
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  page?: number = 1;
-
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  @IsOptional()
-  limit?: number = 24;
 }

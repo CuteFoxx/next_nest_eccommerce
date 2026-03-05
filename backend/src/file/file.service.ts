@@ -4,6 +4,7 @@ import { StorageService } from './storage.service';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { FileQueryDto } from './dto/file-query.dto';
+import { paginate } from 'src/common/dto/paginated.dto';
 
 @Injectable()
 export class FileService {
@@ -42,8 +43,7 @@ export class FileService {
   }
 
   async findMany(query: FileQueryDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 24;
+    const { page, limit } = query;
     const skip = (page - 1) * limit;
 
     const where = query.purpose ? { purpose: query.purpose } : {};
@@ -58,10 +58,12 @@ export class FileService {
       this.prismaService.file.count({ where }),
     ]);
 
-    return {
-      data: data.map((f) => ({ ...f, url: this.storageService.getUrl(f.key) })),
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
-    };
+    return paginate(
+      data.map((f) => ({ ...f, url: this.storageService.getUrl(f.key) })),
+      total,
+      page,
+      limit,
+    );
   }
 
   async findOne(id: number) {
