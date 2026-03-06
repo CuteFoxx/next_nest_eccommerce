@@ -28,8 +28,10 @@ import { User } from 'generated/prisma/browser';
 import { AttributeService } from 'src/attribute/attribute.service';
 import { AssignProductAttributesDto } from 'src/attribute/dto/assign-product-attributes.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { SkipThrottle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @Controller('products')
+@SkipThrottle({ auth: true })
 export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
@@ -48,6 +50,7 @@ export class ProductsController {
     @Query() pagination: PaginationQueryDto,
     @Query() query: Record<string, string>,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { categoryId, page, limit, ...rest } = query;
 
     const where: Record<string, unknown> = {};

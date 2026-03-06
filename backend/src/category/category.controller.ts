@@ -27,9 +27,11 @@ import { User } from 'generated/prisma/client';
 import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { CategoryDto } from './dto/category.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('category')
 @Serialize(CategoryDto)
+@SkipThrottle({ auth: true })
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

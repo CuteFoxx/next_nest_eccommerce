@@ -29,8 +29,10 @@ import { FileService } from './file.service';
 import { User } from 'generated/prisma/browser';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { FileDto } from './dto/file.dto';
+import { SkipThrottle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @Controller('file')
+@SkipThrottle({ auth: true })
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 

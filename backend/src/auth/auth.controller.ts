@@ -18,9 +18,11 @@ import { CurrentUser } from './decorators/currentUser.decorator';
 import { User } from 'generated/prisma/browser';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh.auth.guard';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('auth')
 @Serialize(UserDto)
+@SkipThrottle({ default: true })
 export class AuthController {
   constructor(
     private readonly usersService: UsersService,

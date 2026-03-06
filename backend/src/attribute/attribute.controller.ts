@@ -21,8 +21,10 @@ import { Role } from 'generated/prisma/enums';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { AttributeDto } from './dto/attribute.dto';
 import { CategoryFilterDto } from './dto/category-filters.dto';
+import { SkipThrottle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @Controller('attributes')
+@SkipThrottle({ auth: true })
 export class AttributeController {
   constructor(private readonly attributeService: AttributeService) {}
 
