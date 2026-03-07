@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverApi } from "@/lib/api.server";
+import { decodeJwt } from "jose";
 
 export const runtime = "nodejs";
 
 const protectedRoutes = ["/profile"];
+const adminRoutes = ["/admin"];
 
 export async function middleware(req: NextRequest) {
   const authToken = req.cookies.get("Authentication");
   const refreshToken = req.cookies.get("Refresh");
+  console.log(authToken);
 
   if (!authToken && refreshToken) {
     try {
@@ -26,12 +29,27 @@ export async function middleware(req: NextRequest) {
     } catch {}
   }
 
+  const { pathname } = req.nextUrl;
+
   const isProtected = protectedRoutes.some((route) =>
-    req.nextUrl.pathname.startsWith(route),
+    pathname.startsWith(route),
   );
 
   if (isProtected && !authToken) {
     return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  const isAdmin = adminRoutes.some((route) => pathname.startsWith(route));
+
+  if (isAdmin) {
+    if (!authToken) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
+    const payload = decodeJwt(authToken.value);
+    if (payload.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
   }
 
   return NextResponse.next();
