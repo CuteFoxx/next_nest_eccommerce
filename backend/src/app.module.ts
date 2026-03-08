@@ -6,6 +6,7 @@ import { ProductsModule } from './products/products.module';
 import { CategoryModule } from './category/category.module';
 import { FileModule } from './file/file.module';
 import { AttributeModule } from './attribute/attribute.module';
+import { MenuModule } from './menu/menu.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -18,6 +19,7 @@ import { APP_GUARD } from '@nestjs/core';
     CategoryModule,
     FileModule,
     AttributeModule,
+    MenuModule,
     ThrottlerModule.forRoot([
       {
         name: 'default',

@@ -60,17 +60,21 @@ export const Modal = ({
       return;
     }
 
-    if (!wrapperRef.current?.contains(target)) {
+    if (
+      !wrapperRef.current?.contains(target) &&
+      !target.closest("[data-radix-select-viewport]") &&
+      !target.closest("[data-radix-popper-content-wrapper]")
+    ) {
       normalizedControls.setIsOpen(false);
       return;
     }
   };
 
   useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   });
 

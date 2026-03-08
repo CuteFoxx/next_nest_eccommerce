@@ -5,6 +5,9 @@ const internalBackendUrl = process.env.BACKEND_URL!;
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  turbopack: {
+    root: "..",
+  },
   images: {
     remotePatterns: [
       {

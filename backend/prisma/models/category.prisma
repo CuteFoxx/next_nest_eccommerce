@@ -9,7 +9,8 @@ model Category {
     parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
     children Category[] @relation("CategoryTree")
 
-    products Product[]
+    products  Product[]
+    menuItems MenuItem[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

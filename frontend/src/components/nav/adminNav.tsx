@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Tag, Package } from "lucide-react";
+import { LayoutDashboard, Tag, Package, Menu } from "lucide-react";
 
 export function AdminNav() {
   return (
@@ -15,6 +15,10 @@ export function AdminNav() {
       <Link href="/admin/products" className="flex items-center gap-2 px-3 py-2 text-sm">
         <Package size={16} />
         Products
+      </Link>
+      <Link href="/admin/menu" className="flex items-center gap-2 px-3 py-2 text-sm">
+        <Menu size={16} />
+        Menu
       </Link>
     </nav>
   );

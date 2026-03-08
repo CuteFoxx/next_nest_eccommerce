@@ -1,0 +1,44 @@
+enum MenuItemType {
+    CATEGORY
+    FILTER
+    LINK
+}
+
+model MenuItem {
+    id       Int          @id @default(autoincrement())
+    label    String
+    type     MenuItemType
+    position Int          @default(0)
+
+    parentId Int?
+    parent   MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
+    children MenuItem[] @relation("MenuTree")
+
+    categoryId Int?
+    category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+    filterValues MenuItemFilterValue[]
+
+    url String?
+
+    imageId Int?
+    image   File? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([parentId, position])
+    @@index([categoryId])
+    @@index([imageId])
+}
+
+model MenuItemFilterValue {
+    menuItemId       Int
+    menuItem         MenuItem       @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+    attributeValueId Int
+    attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+    @@id([menuItemId, attributeValueId])
+    @@index([attributeValueId])
+}

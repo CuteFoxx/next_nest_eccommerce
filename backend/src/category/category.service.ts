@@ -51,7 +51,6 @@ export class CategoryService {
     userId?: number,
   ) {
     let uploadedFile: File | null = null;
-    console.log(file, userId);
 
     if (file && userId) {
       uploadedFile = await this.fileService.upload(

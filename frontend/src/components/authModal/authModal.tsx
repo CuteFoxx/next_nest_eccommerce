@@ -1,18 +1,19 @@
 import { useAuth } from "@/context/auth.context";
-import { Modal, ModalContent, ModalTitle } from "../ui/modal";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { LoginForm } from "../login/loginForm";
 import { useState } from "react";
 import { SignupForm } from "../signup/signupForm";
 import { Button } from "../ui/button";
 
 interface AuthModalProps {
-  triggerRef: React.RefObject<HTMLButtonElement | null>;
   isModalOpen: boolean;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AuthModal = ({
-  triggerRef,
   isModalOpen,
   setIsModalOpen,
 }: AuthModalProps) => {
@@ -21,11 +22,8 @@ const AuthModal = ({
 
   return (
     !isLoggedIn && (
-      <Modal
-        triggerElement={triggerRef}
-        controls={{ isOpen: isModalOpen, setIsOpen: setIsModalOpen }}
-      >
-        <ModalContent>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
           <ul
             className="mb-2 flex gap-1 [&_button]:w-full [&_li]:flex-1"
             role="tablist"
@@ -54,8 +52,8 @@ const AuthModal = ({
           <div role="tabpanel">
             {activeTab === "login" ? <LoginForm /> : <SignupForm />}
           </div>
-        </ModalContent>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     )
   );
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { User } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/auth.context";
 import Link from "next/link";
 import AuthModal from "./authModal/authModal";
@@ -9,7 +9,6 @@ import AuthModal from "./authModal/authModal";
 const Header = () => {
   const { isLoggedIn } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   return (
     <>
@@ -20,13 +19,12 @@ const Header = () => {
             <User />
           </Link>
         ) : (
-          <button ref={triggerRef} onClick={() => setIsModalOpen(true)}>
+          <button onClick={() => setIsModalOpen(true)}>
             <User />
           </button>
         )}
       </header>
       <AuthModal
-        triggerRef={triggerRef}
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
       />
