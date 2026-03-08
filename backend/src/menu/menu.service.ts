@@ -113,7 +113,7 @@ export class MenuService {
   ) {
     if (dto.parentId !== undefined) {
       const depth = await this.getDepth(dto.parentId);
-      if (depth >= MAX_DEPTH) {
+      if (depth > MAX_DEPTH) {
         throw new BadRequestException(
           `Menu nesting cannot exceed ${MAX_DEPTH} levels`,
         );
@@ -180,7 +180,7 @@ export class MenuService {
         );
       }
       const depth = await this.getDepth(dto.parentId);
-      if (depth >= MAX_DEPTH) {
+      if (depth > MAX_DEPTH) {
         throw new BadRequestException(
           `Menu nesting cannot exceed ${MAX_DEPTH} levels`,
         );

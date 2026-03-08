@@ -58,8 +58,8 @@ const menuItemFormSchema = z
     { message: "Category is required", path: ["categoryId"] },
   )
   .refine(
-    (d) => d.type !== "FILTER" || (d.categoryId && d.categoryId !== ""),
-    { message: "Category is required for filters", path: ["categoryId"] },
+    (d) => d.type !== "FILTER" || (d.parentId && d.parentId !== ""),
+    { message: "Parent category item is required for filters", path: ["parentId"] },
   )
   .refine(
     (d) =>
@@ -125,25 +125,36 @@ export function MenuItemForm({
 
   const watchedType = form.watch("type");
   const watchedCategoryId = form.watch("categoryId");
+  const watchedParentId = form.watch("parentId");
+
+  const parentItem = parentOptions.find(
+    (item) => String(item.id) === watchedParentId,
+  );
+  const parentCategoryId =
+    parentItem?.type === "CATEGORY" ? parentItem.categoryId : undefined;
 
   useEffect(() => {
     api.get<Category[]>("/category").then((res) => setCategories(res.data));
   }, []);
 
   useEffect(() => {
-    if (
-      (watchedType === "FILTER" || watchedType === "CATEGORY") &&
-      watchedCategoryId
-    ) {
+    const categoryIdForFilters =
+      watchedType === "FILTER" && parentCategoryId
+        ? String(parentCategoryId)
+        : watchedType === "CATEGORY" && watchedCategoryId
+          ? watchedCategoryId
+          : undefined;
+
+    if (categoryIdForFilters) {
       api
         .get<FilterAttribute[]>(
-          `/attributes/categories/${watchedCategoryId}/filters`,
+          `/attributes/categories/${categoryIdForFilters}/filters`,
         )
         .then((res) => setFilters(res.data));
     } else {
       setFilters([]);
     }
-  }, [watchedType, watchedCategoryId]);
+  }, [watchedType, watchedCategoryId, parentCategoryId]);
 
   const onSubmit = async (data: MenuItemFormValues) => {
     try {
@@ -158,20 +169,31 @@ export function MenuItemForm({
           url: data.type === "LINK" ? data.url : undefined,
         });
       } else {
-        const formData = new FormData();
-        formData.append("label", data.label);
-        formData.append("type", data.type);
-        if (data.parentId) formData.append("parentId", data.parentId);
-        if (data.categoryId) formData.append("categoryId", data.categoryId);
-        if (data.type === "FILTER" && data.attributeValueIds) {
-          data.attributeValueIds.forEach((id) =>
-            formData.append("attributeValueIds[]", String(id)),
-          );
-        }
-        if (data.type === "LINK" && data.url) formData.append("url", data.url);
-        if (data.file instanceof File) formData.append("file", data.file);
+        const body: Record<string, unknown> = {
+          label: data.label,
+          type: data.type,
+          parentId: data.parentId ? Number(data.parentId) : undefined,
+          categoryId: data.categoryId ? Number(data.categoryId) : undefined,
+          attributeValueIds:
+            data.type === "FILTER" ? data.attributeValueIds : undefined,
+          url: data.type === "LINK" ? data.url : undefined,
+        };
 
-        await api.post("/menu", formData);
+        if (data.file instanceof File) {
+          const formData = new FormData();
+          formData.append("file", data.file);
+          for (const [key, value] of Object.entries(body)) {
+            if (value === undefined) continue;
+            if (Array.isArray(value)) {
+              value.forEach((v) => formData.append(key, String(v)));
+            } else {
+              formData.append(key, String(value));
+            }
+          }
+          await api.post("/menu", formData);
+        } else {
+          await api.post("/menu", body);
+        }
       }
       form.reset();
       onSuccess();
@@ -253,7 +275,7 @@ export function MenuItemForm({
           )}
         />
 
-        {(watchedType === "CATEGORY" || watchedType === "FILTER") && (
+        {watchedType === "CATEGORY" && (
           <Controller
             name="categoryId"
             control={form.control}
@@ -282,7 +304,15 @@ export function MenuItemForm({
           />
         )}
 
-        {watchedType === "FILTER" && filters.length > 0 && (
+        {watchedType === "FILTER" && !parentCategoryId && (
+          <p className="text-sm text-muted-foreground">
+            Select a parent item with a category to load filter options.
+          </p>
+        )}
+
+        {((watchedType === "FILTER" && parentCategoryId) ||
+          watchedType === "CATEGORY") &&
+          filters.length > 0 && (
           <Controller
             name="attributeValueIds"
             control={form.control}

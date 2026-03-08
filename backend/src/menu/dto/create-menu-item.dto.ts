@@ -31,6 +31,9 @@ export class CreateMenuItemDto {
   @IsOptional()
   categoryId?: number;
 
+  @Transform(({ value }) =>
+    Array.isArray(value) ? value.map(Number) : value != null ? [Number(value)] : undefined,
+  )
   @IsArray()
   @IsNumber({}, { each: true })
   @IsOptional()
